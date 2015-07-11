@@ -1,6 +1,6 @@
 # Python script to read in an image and convert it to ascii art
 
-import Image
+from PIL import Image
 import numpy as np
 import sys
 #import argparse
