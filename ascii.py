@@ -2,71 +2,68 @@
 
 from PIL import Image
 import numpy as np
-import sys
-#import argparse
-
-### TODO: add in command line arguments for script
-#parser = argparse.ArgumentParser(description='convert image to ascii art.')
-
-#parser.add_argument('image', type=String, help='The file to convert.')
+import sys, os, argparse
 
 gran = 25
 
-#if sys.argv[3] != None:
-	#chars = arg[3]
-#	if sys.argv[4] != None:
-#		gran = sys,argv[4]
+#chars = ' `^",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$'
+#chars = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~i!lI;:,\"^`. "
+#chars = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,\"^`'. "
+chars = " .:-=+*#%@"
 
-# large charset(70)
-chars = [' ','.','\'','`','^','"',',',':',';','I','l','!','i','>','<','~','+','_','-','?',']','[','{','}','1',')','(','|','\\','/','t','f','j','r','x','n','u','v','c','z','X','Y','U','J','C','L','Q','0','O','Z','m','w','q','p','d','b','k','h','a','o','*','#','M','W','&','8','%','B','$','@']
-
-# medium charset(50)
-#chars = [' ','.','^','"',',',':',';','l','i','>','~','+','_','-','[','}','1','(','|','/','t','f','j','r','x','n','c','z','X','U','C','L','Q','O','Z','w','q','d','k','h','a','o','*','#','W','&','8','%','$','@']
-
-# small charset (10)
-#chars = [' ','.',':','-','=','+','*','#','%','@']
-
-# open image
-img = Image.open(sys.argv[1])
-
-# convert image data to a useable form, repeat convert. redundant code
-pic = np.array(img.convert('L'))
-
-### 1080p screen is 8 x 16 pix
-
-w = 8
-h = 16
-rsum = 0
-
-woffset = 0
-hoffset = 0
-
-# truncate dimensions to fit cells
-width = pic.shape[1] - (pic.shape[1] % 8)
-height = pic.shape[0] - (pic.shape[0] % 16)
-
-line = ""
+def open_image(path):
+    img = Image.open(sys.argv[1])
+    return np.array(img.convert('L'))
 
 
+def generate_ascii(image, gamma):
+    w = 8
+    h = 16
+    rsum = 0
 
-print("adjusted width: " + str(width))
-print("adjusted height: " + str(height))
+    woffset = 0
+    hoffset = 0
 
-#debugging line
-#print(pic)
+    # truncate dimensions to fit cells
+    width = image.shape[1] - (image.shape[1] % 8)
+    height = image.shape[0] - (image.shape[0] % 16)
 
-while h*hoffset + 15 < height:
-	while w * woffset + 7 < width: 
-		for y in range(h * hoffset,( h *  hoffset) + 15):
-			for x in range(w * woffset,( w * woffset) + 7):
-				rsum += pic[y, x] #- 100 #uncomment for brightnesss control
-		rsum = rsum / (8 * 16)
-		line = line + str(chars[rsum / gran])
-		woffset = woffset + 1
-	print(line)
-	hoffset = hoffset + 1
-	line = ""
-	rsum = 0
-	woffset = 0
+    line = ""
 
-### TODO(optional) write algorithm for compression for ascii video streams
+    #print("adjusted width: " + str(width))
+    #print("adjusted height: " + str(height))
+
+    while h*hoffset + 15 < height:
+	    while w * woffset + 7 < width: 
+		    for y in range(h * hoffset,( h *  hoffset) + 15):
+			    for x in range(w * woffset,( w * woffset) + 7):
+				    rsum += image[y, x] #- gamma #uncomment for brightnesss control
+		    rsum = rsum / (8 * 16)
+		    line = line + str(chars[int(rsum / gran)])
+		    woffset = woffset + 1
+
+	    print(line)
+	    hoffset = hoffset + 1
+	    line = ""
+	    rsum = 0
+	    woffset = 0
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(description='convert image to ascii art.')
+    parser.add_argument('image', type=str, help='The file to convert.',)
+    parser.add_argument('--verbose', '-v', help="Increase output verbosity", action='store_true')
+    parser.add_argument('--gamma', '-g', type=int, help='gamma offset')
+    args = parser.parse_args()
+
+    if not os.path.isfile(args.image):
+        parser.print_help()
+        sys.exit(1)
+    else:
+        image = open_image(args.image)
+
+    if args.gamma is None:
+        args.gamma = 0
+
+    generate_ascii(image, args.gamma)
+
